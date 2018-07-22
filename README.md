@@ -49,8 +49,7 @@ ampy --port /dev/ttyUSB0 --baud 115200 put micropython-adafruit-ssd1306/ssd1306.
 
 ```
 >>> import machine, ssd1306
-``
-`
+```
 OLED_RST is connected to pin 16 and must kept high.
 ```
 >>> pin16 = machine.Pin(16, machine.Pin.OUT)
