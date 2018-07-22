@@ -1,0 +1,6 @@
+[submodule "micropython-adafruit-ssd1306"]
+	path = micropython-adafruit-ssd1306
+	url = https://github.com/adafruit/micropython-adafruit-ssd1306.git
+[submodule "WiFi_Kit_series"]
+	path = WiFi_Kit_series
+	url = https://github.com/Heltec-Aaron-Lee/WiFi_Kit_series.git
