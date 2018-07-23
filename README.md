@@ -1,11 +1,8 @@
 The Wifi Lora 32 board features an ESP32 microcontroller, a SX1276 LoRa tranceiver and a SSD1306 comaptible oled display.
 
 # Notes
-
-
-
   * How to install: https://www.instructables.com/id/MicroPython-on-an-ESP32-Board-With-Integrated-SSD1/
-  * https://www.hackerspace-ffm.de/wiki/index.php?title=Heltec_Wifi_LoRa_32
+  * Hardware https://www.hackerspace-ffm.de/wiki/index.php?title=Heltec_Wifi_LoRa_32
 
 # Install
 ```
@@ -14,10 +11,6 @@ pip3 install esptool
 
 ## Micropython
 The serial interface defaults to ```/dev/ttyUSB0```
-
-```
-$ esptool.py erase_flash
-```
 
 ```
 $ esptool.py erase_flash
@@ -74,7 +67,7 @@ Control the white led.
 ```
 
 # OneWire Demo
-Read a Dallas 18B20 temperature sensor, connected to `GPIOXX`
+Read a Dallas 18B20 temperature sensor, connected to `GPIO12`
 
 http://docs.micropython.org/en/v1.9.3/esp8266/esp8266/tutorial/onewire.html
 
@@ -92,10 +85,17 @@ http://docs.micropython.org/en/v1.9.3/esp8266/esp8266/tutorial/onewire.html
 # Hardware
 Pinout
 
-| Pin | Description |
-| ------------- | ------------- |
-| 15 `GPIO15`  | OLED_SCL  |
-| 4 `GPIO4`  | OLED_SDA  |
-| 16 `GPIO16`  | OLED_RST  |
-| 25 `GPIO25`  | white LED  |
-| 12 `GPIO12` |  | 
+| `GPIO`         | Description    |
+| -------------------: | :------------- |
+| `GPIO15`          | OLED_SCL |
+| `GPIO4`            | OLED_SDA |
+| `GPIO16`          | OLED_RST  |
+| `GPIO25`          | white LED  |
+| `GPIO5`            | **SCK** (SX1276) |
+| `GPIO19`          | **MISO** (SX1276) |
+| `GPIO27`          | **MOSI** (SX1276) |
+| `GPIO18`          | **CS** (SX1276) |
+| `GPIO14`          | **RESET** |
+| `GPIO26`          | **DIO1** IRQ (8) |
+| `GPIO33`          | **DIO2** 32k_XN (9)  |
+| `GPIO32`          | **DIO3** 32k_XP (10) |
