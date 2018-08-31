@@ -54,25 +54,29 @@ IRQ_RX_DONE_MASK = 0x40
 IRQ_RX_TIME_OUT_MASK = 0x80
 
 class SX127x(object):
-    def __init__(self): 
+    def __init__(self):
+        self.recv_flag = False
         self.setup()
 
-    def setup(self, freq=868.1e6, bw=125e3, cr=8, impl=1, sf=12):
+    def setup(self, freq=868.1e6, bw=125e3, cr=7, impl=0, sf=7):
         self.impl = impl
+        
 
         self.reset_chip()
+        
+        sleep(0.1)
         self.set_sleep()
-
+        
         self.set_frequency(freq)
-        self.set_config_1(bw, cr, impl) # 4/5, implicit header
+        self.set_config_1(bw, cr, impl) # 4/7, implicit header
         self.set_config_2(sf)
 
         # enable AGC
-        self.write_register(REG_MODEM_CONFIG_3, 0x0c)
+        self.write_register(REG_MODEM_CONFIG_3, 0x04)
 
         # set output pin and tx power 
         #self.write_register(REG_PA_CONFIG, 0x70 | 14)
-        self.write_register(REG_PA_CONFIG, 0x80 | 15)
+        self.write_register(REG_PA_CONFIG, 0x8f)
 
         self.write_register(REG_LNA, 0x23)  # LNA Gain -> G1 max
                                             # LNA Boost RF 150%
@@ -80,24 +84,36 @@ class SX127x(object):
         # configure fifo addresses
         # default setting: TX 0x80
         #                RX: 0x00
-    
-    def transmit(self, pkt):
+   
+    def handle_rx(self, arg):
+        # set FIFO address to current rx address
+        self.write_register(REG_FIFO_ADDR_PTR,
+                self.read_register(REG_FIFO_RX_CURRENT_ADDR))
+
+        pkt_length = self.read_register(REG_RX_NB_BYTES)
+
+        self.recv_packet = bytearray()
+
+        for _ in range(pkt_length):
+            self.recv_packet.append(self.read_register(REG_FIFO))
+        
+        self.recv_flag = True
+
+    def transmit(self, payload):
         self.set_standby()
 
         # set data pointer
         self.write_register(REG_FIFO_ADDR_PTR, FIFO_TX_BASE_ADDR)
-        current = self.read_register(REG_PAYLOAD_LENGTH)
-        print("Current register: ", current)
+        #current = self.read_register(REG_PAYLOAD_LENGTH)
+        #print("Current register: ", current)
 
         # write packet into fifo buffer
-        for byte in pkt.serialize():
+        for byte in bytes(payload):
             self.write_register(REG_FIFO, byte)
 
         # set packet length
-        self.write_register(REG_PAYLOAD_LENGTH, len(pkt))
+        self.write_register(REG_PAYLOAD_LENGTH, len(payload))
        
-        print("send {} on length: {}".format(pkt.serialize(), len(pkt))) 
-
         self.write_register(REG_OP_MODE,
                 MODE_LONG_RANGE | MODE_TX)
         
@@ -111,7 +127,7 @@ class SX127x(object):
 
     def reset_chip(self):
         self.rst_pin.value(0)
-        sleep(0.012)
+        sleep(0.012)         
         self.rst_pin.value(1)
 
     def set_config_2(self, sp_factor):
@@ -160,11 +176,40 @@ class SX127x(object):
 
         return irq_flags
 
+    def get_random(self, n):
+        """
+        Read n true random bytes from RegRssiWideband
+        """
+        reg_op_mode = self.read_register(REG_OP_MODE)
+        reg_modem_config1 = self.read_register(REG_MODEM_CONFIG_1)
+        reg_modem_config2 = self.read_register(REG_MODEM_CONFIG_2)
+        
+        # recommended settings from AN1200.24
+        self.write_register(REG_OP_MODE, 0x8d)
+        self.write_register(REG_MODEM_CONFIG_1, 0x72)
+        self.write_register(REG_MODEM_CONFIG_2, 0x70)
+        
+        buf = b''
+        for i in range(n):
+            b = 0
+            for j in range(8):
+                b |= (self.read_register(REG_RSSI_WIDEBAND) & 0x01) << j
+            buf += bytes([b]) 
+        self.write_register(REG_OP_MODE, reg_op_mode)
+        self.write_register(REG_MODEM_CONFIG_1, reg_modem_config1)
+        self.write_register(REG_MODEM_CONFIG_2, reg_modem_config2)
+
+        gc.collect()
+
+        return buf
+         
+
     def get_rssi(self):
         return (self.read_register(REG_PKT_RSSI_VALUE) - (164 if self.frequency < 868e6 else 157))
 
     def get_snr(self):
         return (self.read_register(REG_PKT_SNR_VALUE)) * 0.25
+
 
     def rx_mode(self):
         self.set_continuous_rx()
@@ -187,6 +232,10 @@ class SX127x(object):
         gc.collect()
 
         return buf
+
+    def wait_for_join_accept(self):
+        while True:
+            pass
 
     def set_continuous_rx(self):
         self.write_register(REG_OP_MODE,

@@ -4,3 +4,6 @@
 [submodule "WiFi_Kit_series"]
 	path = WiFi_Kit_series
 	url = https://github.com/Heltec-Aaron-Lee/WiFi_Kit_series.git
+[submodule "LoRaWAN"]
+	path = LoRaWAN
+	url = https://github.com/jeroennijhof/LoRaWAN.git

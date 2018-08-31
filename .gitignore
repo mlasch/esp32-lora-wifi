@@ -1,5 +1,7 @@
 *.swp
 
+# keys
+secret_priv.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
